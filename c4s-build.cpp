@@ -1,5 +1,6 @@
 /*! \file c4s-build.cpp
  * \brief Source code for the DirectDatabase library build.
+ * 0.4: Linux compilation: Removed padded naming. Compilation not use variables anymore.
  * 0.3: better output during install what is library is being copied.
  */
 // Copyright (c) Menacon Oy
@@ -18,21 +19,15 @@ int Build(bool wxmode)
 {
     path_list cppFiles(files_common, ' ');
 
-    int flags = BUILD_LIB|BUILD_PAD_NAME;
+    int flags = BUILD_LIB;
     flags |= args.is_set("-deb") ? BUILD_DEBUG : BUILD_RELEASE;
     if(args.is_set("-V"))
         flags |= BUILD_VERBOSE;
-    const char *subsys =  args.is_value("-t","WX") ? "wx":"stl";
+    const char *subsys =  "stl";
     builder_gcc make(&cppFiles,"directdb",&cout,flags,subsys);
-    make.include_variables();
-    make.add_comp("-Wno-ctor-dtor-privacy -Wnon-virtual-dtor -I$(LIBPQ)/interfaces/libpq -I$(LIBPQ)/include -I$(C4S)/include/cpp4scripts");
+    make.add_comp("-Wno-ctor-dtor-privacy -Wnon-virtual-dtor -I/usr/include/postgresql/ -I/usr/include/postgresql/libpq -I/usr/local/include/cpp4scripts");
     //make.add_comp("-I/usr/include/mysql");
-    if(args.is_set("-wx")) {
-        make.add_comp("-DDDB_USEWX");
-    }
-    else {
-        make.add_comp("-fno-rtti -DDDB_USESTL");
-    }
+    make.add_comp("-fno-rtti -DDDB_USESTL");
     if(args.is_set("-deb"))
         make.add_comp("-DC4S_LOG_LEVEL=2");
     else
@@ -50,7 +45,7 @@ int Build(bool wxmode)
     const char *subsys =  wxmode ? "wx":"stl";
     const char *wxopts = wxmode ? "":0;
 
-    int flags = BUILD_LIB|BUILD_PAD_NAME;
+    int flags = BUILD_LIB;
     flags |= args.is_set("-deb") ? BUILD_DEBUG : BUILD_RELEASE;
     if(args.is_set("-V"))
         flags |= BUILD_VERBOSE;
@@ -88,12 +83,12 @@ int Build(bool wxmode)
 // ====================================================================================================
 int Clean(bool wxmode)
 {
-    const char *subsys = wxmode ? "wx":"stl";
     try{
 #if defined(__linux) || defined(__APPLE__)
-        builder_gcc(0,"",0,BUILD_LIB|BUILD_DEBUG|BUILD_PAD_NAME, subsys).clean_build_dir();
-        builder_gcc(0,"",0,BUILD_LIB|BUILD_RELEASE|BUILD_PAD_NAME, subsys).clean_build_dir();
+        builder_gcc(0,"",0,BUILD_LIB|BUILD_DEBUG).clean_build_dir();
+        builder_gcc(0,"",0,BUILD_LIB|BUILD_RELEASE).clean_build_dir();
 #else
+	const char *subsys = wxmode ? "wx":"stl";
         builder_vc(0,"",0,BUILD_DEBUG|BUILD_PAD_NAME, subsys).clean_build_dir();
         builder_vc(0,"",0,BUILD_RELEASE|BUILD_PAD_NAME, subsys).clean_build_dir();
 #endif
@@ -108,27 +103,30 @@ int Clean(bool wxmode)
 // ====================================================================================================
 int install(bool wxmode)
 {
-    const char *subsys = wxmode ? "wx":"stl";
     const char *name="directdb";
 #if defined(__linux) || defined(__APPLE__)
-    path lib_d = builder_gcc(0,name,0,BUILD_LIB|BUILD_PAD_NAME|BUILD_DEBUG, subsys).get_target_path();
-    path lib_r = builder_gcc(0,name,0,BUILD_LIB|BUILD_PAD_NAME|BUILD_RELEASE, subsys).get_target_path();
+    path lib_d = builder_gcc(0,name,0,BUILD_LIB|BUILD_DEBUG).get_target_path();
+    path lib_r = builder_gcc(0,name,0,BUILD_LIB|BUILD_RELEASE).get_target_path();
 #else
+    const char *subsys = wxmode ? "wx":"stl";
     path lib_d = builder_vc(0,name,0,BUILD_LIB|BUILD_PAD_NAME|BUILD_DEBUG, subsys).get_target_path();
     path lib_r = builder_vc(0,name,0,BUILD_LIB|BUILD_PAD_NAME|BUILD_RELEASE, subsys).get_target_path();
 #endif
-
+    int count=0;
     try {
         string root = append_slash(args.get_value("-install"));
         if (lib_d.exists()) {
             cout << "Copying "<<lib_d.get_path()<<'\n';
-            lib_d.cp(path(root+"lib/"),PCF_FORCE);
+            lib_d.cp(path(root+"lib-d/"),PCF_FORCE);
+	    count++;
         }
         if (lib_r.exists()) {
             cout << "Copying "<<lib_r.get_path()<<'\n';
             lib_r.cp(path(root+"lib/"),PCF_FORCE);
+	    count++;
         }
-
+	if(count==0)
+	    cout<<"Warning: No libraries copied. Did you build first?\n";
         path_list ipl(path("./"),"*.hpp");
         ipl.copy_to(path(root+"include/directdb/"),PCF_FORCE);
     }catch(c4s_exception ce) {
@@ -152,7 +150,7 @@ int main(int argc, char **argv)
     args += argument("-install", true, "Install library to given root.");
     args += argument("-clean",false, "Clean up build files.");
 
-    cout << "Direct Database library build v 0.3\n";
+    cout << "Direct Database library build v 0.4\n";
     try{
         args.initialize(argc,argv,1);
     }
@@ -162,6 +160,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+#ifdef _WIN32
     if(args.is_value("-t","STL")) {
         wxmode = false;
     } else if(args.is_value("-t","WX")){
@@ -171,6 +170,7 @@ int main(int argc, char **argv)
         cout << "Missing target (WX or STL).\n";
         return 1;
     }
+#endif    
     if(args.is_set("-clean"))
         return Clean(wxmode);
 
