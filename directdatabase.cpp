@@ -144,29 +144,40 @@ const CHR_T *errorStr[MAX_ERRORS] = {
 }
 
 // =================================================================================================
-const CHR_T* DirectDatabase::CleanString2(const DDBSTR &str)
+const char* DirectDatabase::CleanString2(const string &str)
 {
-    reallocateScratch(str.LENGTH());
-    CHR_T *to = scratch_buffer;
-    const CHR_T *from = str.DATA();
+    reallocateScratch(str.length());
+    char *to = scratch_buffer;
+    const char *from = str.DATA();
+    string::const_iterator chi, end;
+
+    chi = str.begin();
+    end = str.end();
+    while(chi != end) {
+        if(*chi == '\'') {
+            *to++ = '\'';
+            *to++ = '\'';
+        }
+        else if(*from != '\r') // skip the carriage return
+            *to++ = *chi;
+        chi++;
+    }
+    *to = 0;
+    return scratch_buffer;
+}
+// =================================================================================================
+#ifdef DDB_USEWX
+const wchar_t* DirectDatabase::CleanString2(const wxString &str)
+{
+    reallocateScratch(str.length());
+    wchar_t *to = scratch_buffer;
+    const wchar_t *from = str.wc_str();
 
     while(*from) {
         if(*from == _T('\'')) {
             *to++ = _T('\'');
             *to++ = _T('\'');
         }
-        //- else if(*from == _T('\n')) {
-        //-     *to++ = _T('\\');
-        //-     *to++ = _T('n');
-        //- }
-        //- else if(*from == _T('\t')) {
-        //-     *to++ = _T('\\');
-        //-     *to++ = _T('t');
-        //- }
-        //else if(*from == _T('\\')) {
-        //    *to++ = _T('\\');
-        //    *to++ = _T('\\');
-        //}
         else if(*from != _T('\r')) // skip the carriage return
             *to++ = *from;
         from++;
@@ -174,6 +185,7 @@ const CHR_T* DirectDatabase::CleanString2(const DDBSTR &str)
     *to = 0;
     return scratch_buffer;
 }
+#endif
 const CHR_T* DirectDatabase::GetCleanHtml(const DDBSTR &str)
 {
     reallocateScratch(str.LENGTH());
