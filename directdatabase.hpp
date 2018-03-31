@@ -78,6 +78,8 @@ const short int DDBT_DAY  = 7; // Date only
 const short int DDBT_CHR  = 8; // Single character
 const short int DDBT_MAX  = 8;
 
+const short int DDB_CLEAN_MAX = 10; // Max number of escapes allowed to Clean.. functions
+
 // Database features
 const short int DDB_FEATURE_CURSOR       = 0x0001;     // Cursor library supported | on/off.
 const short int DDB_FEATURE_TRANSACTIONS = 0x0002;     // Database supports transactions
