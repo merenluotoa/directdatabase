@@ -211,6 +211,7 @@ public:
         \param from Original string.
      */
     virtual const CHR_T* CleanString2(const DDBSTR &str);
+    virtual const CHR_T* CleanUtf8(const char *str);
     virtual void CleanString(DDBSTR &str) { str = CleanString2(str); }
     virtual void CleanString(DDBSTR &to, const DDBSTR &from) { to = CleanString2(from); }
 

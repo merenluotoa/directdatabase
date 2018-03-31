@@ -137,7 +137,7 @@ const CHR_T *errorStr[MAX_ERRORS] = {
     /* 023 */ _T("DB - Initialization failure.")
 };
     DDBSTR str;
-    if(errorId >= MAX_ERRORS || errorId < 0)
+    if(errorId >= MAX_ERRORS)
          str = errorStr[1];
     str = errorStr[errorId];
     return str;
@@ -161,6 +161,27 @@ const char* DirectDatabase::CleanString2(const string &str)
         else if(*from != '\r') // skip the carriage return
             *to++ = *chi;
         chi++;
+    }
+    *to = 0;
+    return scratch_buffer;
+}
+// ..........................................................................................
+const char* DirectDatabase::CleanUtf8(const char *utf8)
+{
+    if(!utf8) {
+        scratch_buffer[0] = 0;
+        return scratch_buffer;
+    }
+    reallocateScratch(strlen(utf8));
+    char *to = scratch_buffer;
+    while(*utf8) {
+        if(*utf8 == '\'') {
+            *to++ = '\'';
+            *to++ = '\'';
+        }
+        else if(*utf8 != '\r') // skip the carriage return
+            *to++ = *utf8;
+        utf8++;
     }
     *to = 0;
     return scratch_buffer;

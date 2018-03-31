@@ -170,7 +170,7 @@ int main(int argc, char **argv)
         cout << "Missing target (WX or STL).\n";
         return 1;
     }
-#endif    
+#endif
     if(args.is_set("-clean"))
         return Clean(wxmode);
 
