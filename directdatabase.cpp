@@ -157,7 +157,6 @@ const char* DirectDatabase::CleanString2(const string &str)
     short int max=0;
     reallocateScratch(str.length());
     char *to = scratch_buffer;
-    const char *from = str.DATA();
     string::const_iterator chi, end;
 
     chi = str.begin();
@@ -172,7 +171,7 @@ const char* DirectDatabase::CleanString2(const string &str)
                 *to++ = ' ';
             }
         }
-        else if(*from != '\r') // skip the carriage return
+        else if(*chi != '\r') // skip the carriage return
             *to++ = *chi;
         else
             max--;
